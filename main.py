@@ -1,11 +1,11 @@
 import tkinter.ttk
-from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry
+from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry, StringVar
 from PIL import ImageTk, Image
 import requests
 from bs4 import BeautifulSoup
-from configparser import ConfigParser
 
-url = ''
+
+url = "https://api.openweathermap.org/data/2.5/weather?q={}&appid={***REMOVED***}"
 
 
 # creating window
@@ -39,6 +39,12 @@ def hide_all_frames():
 
 def search():
     pass
+
+
+def get_weather():# üzerinde uğraşılacak (html class linkleri konulacak)
+    web_page = requests.get(url)
+    soup = BeautifulSoup(web_page.content, "html.parser")
+    location = soup.find("").text # buradaki araya ilgili html kodundan class konulacak
 
 
 # elements for file in menu
@@ -81,8 +87,12 @@ logo_photo = ImageTk.PhotoImage(logo_image)
 logo_label = Label(r, image=logo_photo, bg='#77DCEB')
 logo_label.pack()
 
+clicked = StringVar()
+clicked.set(cities[0])
+
 # creating drop box
 drop_box = tkinter.ttk.Combobox(r, values=cities)
+drop_box.current(0)
 drop_box.pack(pady=20)
 
 search_btn = Button(r, text='Search', width=12, command=search)
