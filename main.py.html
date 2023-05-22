@@ -1,0 +1,129 @@
+<html>
+<head>
+<title>main.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6a8759;}
+.s3 { color: #808080;}
+.s4 { color: #6897bb;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+main.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">tkinter.ttk</span>
+<span class="s0">from </span><span class="s1">tkinter </span><span class="s0">import </span><span class="s1">Tk</span><span class="s0">, </span><span class="s1">Frame</span><span class="s0">, </span><span class="s1">Menu</span><span class="s0">, </span><span class="s1">PhotoImage</span><span class="s0">, </span><span class="s1">Label</span><span class="s0">, </span><span class="s1">Button</span><span class="s0">, </span><span class="s1">Entry</span>
+<span class="s0">from </span><span class="s1">PIL </span><span class="s0">import </span><span class="s1">ImageTk</span><span class="s0">, </span><span class="s1">Image</span>
+<span class="s0">import </span><span class="s1">requests</span>
+<span class="s0">from </span><span class="s1">bs4 </span><span class="s0">import </span><span class="s1">BeautifulSoup</span>
+<span class="s0">from </span><span class="s1">configparser </span><span class="s0">import </span><span class="s1">ConfigParser</span>
+
+<span class="s1">url = </span><span class="s2">''</span>
+
+
+<span class="s3"># creating window</span>
+<span class="s1">r = Tk()</span>
+<span class="s1">r.geometry(</span><span class="s2">'414x636'</span><span class="s1">)</span>
+<span class="s3"># bg_image = Image.open('C:/Users/HP/OneDrive/Masaüstü/mainbg.png')</span>
+<span class="s3"># bg_photo = ImageTk.PhotoImage(bg_image)</span>
+<span class="s3"># background_label = Label(r, image=bg_photo)</span>
+<span class="s3"># background_label.place(x=0, y=0, relwidth=1, relheight=1)</span>
+<span class="s1">r.configure(bg=</span><span class="s2">'#77DCEB'</span><span class="s1">)</span>
+<span class="s1">r.title(</span><span class="s2">'Weather App'</span><span class="s1">)</span>
+
+
+<span class="s3"># creating menu bar</span>
+<span class="s1">menubar = Menu(r)</span>
+<span class="s1">r.config(menu=menubar)</span>
+
+
+<span class="s0">def </span><span class="s1">commands():</span>
+    <span class="s0">pass</span>
+
+
+<span class="s0">def </span><span class="s1">file_func():</span>
+    <span class="s1">hide_all_frames()</span>
+    <span class="s1">file_new_frame.pack(fill=</span><span class="s2">&quot;both&quot;</span><span class="s0">, </span><span class="s1">expand=</span><span class="s4">1</span><span class="s1">)</span>
+
+
+<span class="s0">def </span><span class="s1">hide_all_frames():</span>
+    <span class="s1">file_new_frame.pack_forget()</span>
+
+
+<span class="s0">def </span><span class="s1">search():</span>
+    <span class="s0">pass</span>
+
+
+<span class="s3"># elements for file in menu</span>
+<span class="s1">file = Menu(menubar)</span>
+<span class="s1">menubar.add_cascade(label=</span><span class="s2">&quot;File&quot;</span><span class="s0">, </span><span class="s1">menu=file)</span>
+<span class="s1">file.add_command(label=</span><span class="s2">'Save'</span><span class="s0">, </span><span class="s1">command=file_func)</span>
+<span class="s1">file.add_command(label=</span><span class="s2">'Close'</span><span class="s1">)</span>
+<span class="s1">file.add_separator()</span>
+<span class="s1">file.add_command(label=</span><span class="s2">'Exit'</span><span class="s0">, </span><span class="s1">command=r.destroy)</span>
+
+
+<span class="s3"># options in menu</span>
+<span class="s1">option = Menu(menubar)</span>
+<span class="s1">menubar.add_cascade(label=</span><span class="s2">&quot;Options&quot;</span><span class="s0">, </span><span class="s1">menu=option)</span>
+<span class="s1">option.add_command(label=</span><span class="s2">'Find'</span><span class="s0">, </span><span class="s1">command=commands)</span>
+<span class="s1">option.add_command(label=</span><span class="s2">'Find Next'</span><span class="s0">, </span><span class="s1">command=commands)</span>
+
+<span class="s1">file_new_frame = Frame(r</span><span class="s0">, </span><span class="s1">width=</span><span class="s4">414</span><span class="s0">, </span><span class="s1">height=</span><span class="s4">636</span><span class="s0">, </span><span class="s1">bg=</span><span class="s2">'#E9967A'</span><span class="s1">)</span>
+
+<span class="s1">cities = [</span><span class="s2">&quot;Adana&quot;</span><span class="s0">, </span><span class="s2">&quot;Adıyaman&quot;</span><span class="s0">, </span><span class="s2">&quot;Afyonkarahisar&quot;</span><span class="s0">, </span><span class="s2">&quot;Ağrı&quot;</span><span class="s0">, </span><span class="s2">&quot;Aksaray&quot;</span><span class="s0">, </span><span class="s2">&quot;Amasya&quot;</span><span class="s0">, </span><span class="s2">&quot;Ankara&quot;</span><span class="s0">, </span><span class="s2">&quot;Antalya&quot;</span><span class="s0">, </span><span class="s2">&quot;Ardahan&quot;</span><span class="s0">, </span><span class="s2">&quot;Artvin&quot;</span><span class="s0">,</span>
+          <span class="s2">&quot;Aydın&quot;</span><span class="s0">, </span><span class="s2">&quot;Balıkesir&quot;</span><span class="s0">, </span><span class="s2">&quot;Bartın&quot;</span><span class="s0">, </span><span class="s2">&quot;Batman&quot;</span><span class="s0">, </span><span class="s2">&quot;Bayburt&quot;</span><span class="s0">, </span><span class="s2">&quot;Bilecik&quot;</span><span class="s0">, </span><span class="s2">&quot;Bingöl&quot;</span><span class="s0">, </span><span class="s2">&quot;Bitlis&quot;</span><span class="s0">, </span><span class="s2">&quot;Bolu&quot;</span><span class="s0">, </span><span class="s2">&quot;Burdur&quot;</span><span class="s0">, </span><span class="s2">&quot;Bursa&quot;</span><span class="s0">,</span>
+          <span class="s2">&quot;Çanakkale&quot;</span><span class="s0">, </span><span class="s2">&quot;Çankırı&quot;</span><span class="s0">, </span><span class="s2">&quot;Çorum&quot;</span><span class="s0">, </span><span class="s2">&quot;Denizli&quot;</span><span class="s0">, </span><span class="s2">&quot;Diyarbakır&quot;</span><span class="s0">, </span><span class="s2">&quot;Düzce&quot;</span><span class="s0">, </span><span class="s2">&quot;Edirne&quot;</span><span class="s0">, </span><span class="s2">&quot;Elazığ&quot;</span><span class="s0">, </span><span class="s2">&quot;Erzincan&quot;</span><span class="s0">, </span><span class="s2">&quot;Erzurum&quot;</span><span class="s0">,</span>
+          <span class="s2">&quot;Eskişehir&quot;</span><span class="s0">, </span><span class="s2">&quot;Gaziantep&quot;</span><span class="s0">, </span><span class="s2">&quot;Giresun&quot;</span><span class="s0">, </span><span class="s2">&quot;Gümüşhane&quot;</span><span class="s0">, </span><span class="s2">&quot;Hakkâri&quot;</span><span class="s0">, </span><span class="s2">&quot;Hatay&quot;</span><span class="s0">, </span><span class="s2">&quot;Iğdır&quot;</span><span class="s0">, </span><span class="s2">&quot;Isparta&quot;</span><span class="s0">, </span><span class="s2">&quot;İstanbul&quot;</span><span class="s0">, </span><span class="s2">&quot;İzmir&quot;</span><span class="s0">,</span>
+          <span class="s2">&quot;Kahramanmaraş&quot;</span><span class="s0">, </span><span class="s2">&quot;Karabük&quot;</span><span class="s0">, </span><span class="s2">&quot;Karaman&quot;</span><span class="s0">, </span><span class="s2">&quot;Kars&quot;</span><span class="s0">, </span><span class="s2">&quot;Kastamonu&quot;</span><span class="s0">, </span><span class="s2">&quot;Kayseri&quot;</span><span class="s0">, </span><span class="s2">&quot;Kilis&quot;</span><span class="s0">, </span><span class="s2">&quot;Kırıkkale&quot;</span><span class="s0">, </span><span class="s2">&quot;Kırklareli&quot;</span><span class="s0">,</span>
+          <span class="s2">&quot;Kırşehir&quot;</span><span class="s0">, </span><span class="s2">&quot;Kocaeli&quot;</span><span class="s0">, </span><span class="s2">&quot;Konya&quot;</span><span class="s0">, </span><span class="s2">&quot;Kütahya&quot;</span><span class="s0">, </span><span class="s2">&quot;Malatya&quot;</span><span class="s0">, </span><span class="s2">&quot;Manisa&quot;</span><span class="s0">, </span><span class="s2">&quot;Mardin&quot;</span><span class="s0">, </span><span class="s2">&quot;Mersin&quot;</span><span class="s0">, </span><span class="s2">&quot;Muğla&quot;</span><span class="s0">, </span><span class="s2">&quot;Muş&quot;</span><span class="s0">, </span><span class="s2">&quot;Nevşehir&quot;</span><span class="s0">,</span>
+          <span class="s2">&quot;Niğde&quot;</span><span class="s0">, </span><span class="s2">&quot;Ordu&quot;</span><span class="s0">, </span><span class="s2">&quot;Osmaniye&quot;</span><span class="s0">, </span><span class="s2">&quot;Rize&quot;</span><span class="s0">, </span><span class="s2">&quot;Sakarya&quot;</span><span class="s0">, </span><span class="s2">&quot;Samsun&quot;</span><span class="s0">, </span><span class="s2">&quot;Şanlıurfa&quot;</span><span class="s0">, </span><span class="s2">&quot;Siirt&quot;</span><span class="s0">, </span><span class="s2">&quot;Sinop&quot;</span><span class="s0">, </span><span class="s2">&quot;Sivas&quot;</span><span class="s0">, </span><span class="s2">&quot;Şırnak&quot;</span><span class="s0">,</span>
+          <span class="s2">&quot;Tekirdağ&quot;</span><span class="s0">, </span><span class="s2">&quot;Tokat&quot;</span><span class="s0">, </span><span class="s2">&quot;Trabzon&quot;</span><span class="s0">, </span><span class="s2">&quot;Tunceli&quot;</span><span class="s0">, </span><span class="s2">&quot;Uşak&quot;</span><span class="s0">, </span><span class="s2">&quot;Van&quot;</span><span class="s0">, </span><span class="s2">&quot;Yalova&quot;</span><span class="s0">, </span><span class="s2">&quot;Yozgat&quot;</span><span class="s0">, </span><span class="s2">&quot;Zonguldak&quot;</span><span class="s1">]</span>
+
+
+<span class="s3"># Adding logo</span>
+<span class="s1">logo_image = Image.open(</span><span class="s2">'C:/Users/HP/OneDrive/Masaüstü/wthrlogo1.png'</span><span class="s1">)</span>
+
+<span class="s3"># Resize the logo image if needed</span>
+<span class="s1">logo_image = logo_image.resize((</span><span class="s4">300</span><span class="s0">, </span><span class="s4">225</span><span class="s1">))</span>
+
+<span class="s3"># Create a PhotoImage object using ImageTk</span>
+<span class="s1">logo_photo = ImageTk.PhotoImage(logo_image)</span>
+
+<span class="s3"># Create a Label and set the logo image as its content /// bg='#6BD5F7'</span>
+<span class="s1">logo_label = Label(r</span><span class="s0">, </span><span class="s1">image=logo_photo</span><span class="s0">, </span><span class="s1">bg=</span><span class="s2">'#77DCEB'</span><span class="s1">)</span>
+<span class="s1">logo_label.pack()</span>
+
+<span class="s3"># creating drop box</span>
+<span class="s1">drop_box = tkinter.ttk.Combobox(r</span><span class="s0">, </span><span class="s1">values=cities)</span>
+<span class="s1">drop_box.pack(pady=</span><span class="s4">20</span><span class="s1">)</span>
+
+<span class="s1">search_btn = Button(r</span><span class="s0">, </span><span class="s1">text=</span><span class="s2">'Search'</span><span class="s0">, </span><span class="s1">width=</span><span class="s4">12</span><span class="s0">, </span><span class="s1">command=search)</span>
+<span class="s1">search_btn.pack()</span>
+
+<span class="s3"># location label</span>
+<span class="s1">location_lbl = Label(r</span><span class="s0">, </span><span class="s1">text=</span><span class="s2">''</span><span class="s0">, </span><span class="s1">font=(</span><span class="s2">'bold'</span><span class="s0">, </span><span class="s4">20</span><span class="s1">)</span><span class="s0">, </span><span class="s1">bg=</span><span class="s2">'#77DCEB'</span><span class="s1">)</span>
+<span class="s1">location_lbl.pack()</span>
+
+<span class="s3"># weather image</span>
+<span class="s1">image = Label(r</span><span class="s0">, </span><span class="s1">bitmap=</span><span class="s2">''</span><span class="s0">, </span><span class="s1">bg=</span><span class="s2">'#77DCEB'</span><span class="s1">)</span>
+<span class="s1">image.pack()</span>
+
+<span class="s3"># temperature label</span>
+<span class="s1">temperature_lbl = Label(r</span><span class="s0">, </span><span class="s1">text=</span><span class="s2">''</span><span class="s0">, </span><span class="s1">bg=</span><span class="s2">'#77DCEB'</span><span class="s1">)</span>
+<span class="s1">temperature_lbl.pack()</span>
+
+<span class="s3"># weather label</span>
+<span class="s1">weather_lbl = Label(r</span><span class="s0">, </span><span class="s1">text=</span><span class="s2">''</span><span class="s0">, </span><span class="s1">bg=</span><span class="s2">'#77DCEB'</span><span class="s1">)</span>
+<span class="s1">weather_lbl.pack()</span>
+
+
+<span class="s1">r.mainloop()</span>
+</pre>
+</body>
+</html>
