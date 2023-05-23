@@ -85,6 +85,7 @@ def get_weather():  # üzerinde uğraşılacak (html class linkleri konulacak)
     r.update()
     '''
 
+
 # elements for file in menu
 file = Menu(menubar)
 menubar.add_cascade(label="File", menu=file)
@@ -103,10 +104,8 @@ option.add_command(label='Find Next', command=commands)
 file_new_frame = Frame(r, width=414, height=636, bg='#E9967A')
 
 
-
-
 # Adding logo
-logo_image = Image.open('C:/Users/HP/OneDrive/Masaüstü/wthrlogo1.png')
+logo_image = Image.open('wthrlogo1.png')
 
 # Resize the logo image if needed
 logo_image = logo_image.resize((300, 225))
