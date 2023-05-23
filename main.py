@@ -4,8 +4,9 @@ from PIL import ImageTk, Image
 import requests
 from bs4 import BeautifulSoup
 
+API_KEY = "***REMOVED***"
 
-url = "https://api.openweathermap.org/data/2.5/weather?q={}&appid={***REMOVED***}"
+#url = "https://weather.com/tr-TR/weather/today/l/%C4%B0zmir+%C4%B0zmir?canonicalCityId=a3722d3ba43ddbef656021ba77ee61bf4c6fae20636732a1f2958d22beb70107"
 
 
 # creating window
@@ -37,15 +38,52 @@ def hide_all_frames():
     file_new_frame.pack_forget()
 
 
-def search():
+def celsius_to_fahrenheit(celsius):
+    fahrenheit = celsius * (9/5) + 32
+    return fahrenheit
+
+
+def fahrenheit_to_celsius():
     pass
 
 
-def get_weather():# üzerinde uğraşılacak (html class linkleri konulacak)
+def get_weather():  # üzerinde uğraşılacak (html class linkleri konulacak)
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={cities}&appid=" + API_KEY
+
+    web_page = requests.get(url)
+
+    if weather_lbl.get("cod") == 200:  # Verify the response status
+        # Extract specific weather details using BeautifulSoup
+        soup = BeautifulSoup(web_page.content, "html.parser")
+        location_element = soup.find("div", class_="location-class")  # Adjust the class name accordingly
+        temperature_element = soup.find("div", class_="temperature-class")  # Adjust the class name accordingly
+
+        location = location_element.text if location_element else "N/A"
+        temperature = temperature_element.text if temperature_element else "N/A"
+
+        location_lbl.config(text="Location: " + location)
+        temperature_lbl.config(text="Temperature: " + temperature)
+    else:
+        location_lbl.config(text="Location: N/A")
+        temperature_lbl.config(text="Temperature: N/A")
+
+
+    '''
     web_page = requests.get(url)
     soup = BeautifulSoup(web_page.content, "html.parser")
-    location = soup.find("").text # buradaki araya ilgili html kodundan class konulacak
+    location = soup.find('h1', class_="CurrentConditions--location--1YWj_").text
+    # .text is for printing location info only and not other texts
+    temperature = soup.find('span', class_="CurrentConditions--tempValue--MHmYY").text
+    weather_prediction = soup.find('div', class_="CurrentConditions--phraseValue--mZC_p").text
+    print(weather_prediction)
 
+    location_lbl.config(text=location)
+    temperature_lbl.config(text=temperature)
+    weather_lbl.config(text=weather_prediction)
+
+    temperature_lbl.after(60000, get_weather)
+    r.update()
+    '''
 
 # elements for file in menu
 file = Menu(menubar)
@@ -64,14 +102,7 @@ option.add_command(label='Find Next', command=commands)
 
 file_new_frame = Frame(r, width=414, height=636, bg='#E9967A')
 
-cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan", "Artvin",
-          "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa",
-          "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan", "Erzurum",
-          "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Iğdır", "Isparta", "İstanbul", "İzmir",
-          "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale", "Kırklareli",
-          "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir",
-          "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas", "Şırnak",
-          "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"]
+
 
 
 # Adding logo
@@ -87,15 +118,31 @@ logo_photo = ImageTk.PhotoImage(logo_image)
 logo_label = Label(r, image=logo_photo, bg='#77DCEB')
 logo_label.pack()
 
+cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan",
+              "Artvin",
+              "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur",
+              "Bursa",
+              "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan",
+              "Erzurum",
+              "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Iğdır", "Isparta", "İstanbul",
+              "İzmir",
+              "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale", "Kırklareli",
+              "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş",
+              "Nevşehir",
+              "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas",
+              "Şırnak",
+              "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"]
+
 clicked = StringVar()
 clicked.set(cities[0])
-
 # creating drop box
 drop_box = tkinter.ttk.Combobox(r, values=cities)
 drop_box.current(0)
 drop_box.pack(pady=20)
 
-search_btn = Button(r, text='Search', width=12, command=search)
+
+
+search_btn = Button(r, text='Search', width=12, command=get_weather)
 search_btn.pack()
 
 # location label
