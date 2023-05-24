@@ -1,13 +1,12 @@
+import io
 import tkinter.ttk
-from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry, StringVar
+from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry, StringVar, messagebox
 from PIL import ImageTk, Image
 import requests
 from bs4 import BeautifulSoup
 
-API_KEY = "***REMOVED***"
-
 #url = "https://weather.com/tr-TR/weather/today/l/%C4%B0zmir+%C4%B0zmir?canonicalCityId=a3722d3ba43ddbef656021ba77ee61bf4c6fae20636732a1f2958d22beb70107"
-
+API_KEY = "***REMOVED***"
 
 # creating window
 r = Tk()
@@ -47,43 +46,44 @@ def fahrenheit_to_celsius():
     pass
 
 
-def get_weather():  # üzerinde uğraşılacak (html class linkleri konulacak)
-    url = f"https://api.openweathermap.org/data/2.5/weather?q={cities}&appid=" + API_KEY
+def get_weather(city):
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
+    response = requests.get(url)
+    data = response.json()
 
-    web_page = requests.get(url)
-
-    if weather_lbl.get("cod") == 200:  # Verify the response status
-        # Extract specific weather details using BeautifulSoup
-        soup = BeautifulSoup(web_page.content, "html.parser")
-        location_element = soup.find("div", class_="location-class")  # Adjust the class name accordingly
-        temperature_element = soup.find("div", class_="temperature-class")  # Adjust the class name accordingly
-
-        location = location_element.text if location_element else "N/A"
-        temperature = temperature_element.text if temperature_element else "N/A"
-
-        location_lbl.config(text="Location: " + location)
-        temperature_lbl.config(text="Temperature: " + temperature)
-    else:
-        location_lbl.config(text="Location: N/A")
-        temperature_lbl.config(text="Temperature: N/A")
-
-
-    '''
-    web_page = requests.get(url)
-    soup = BeautifulSoup(web_page.content, "html.parser")
-    location = soup.find('h1', class_="CurrentConditions--location--1YWj_").text
-    # .text is for printing location info only and not other texts
-    temperature = soup.find('span', class_="CurrentConditions--tempValue--MHmYY").text
-    weather_prediction = soup.find('div', class_="CurrentConditions--phraseValue--mZC_p").text
-    print(weather_prediction)
+    location = data['name']
+    temperature = round(data['main']['temp'] - 273.15)
+    description = data['weather'][0]['description']
+    icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"
 
     location_lbl.config(text=location)
-    temperature_lbl.config(text=temperature)
-    weather_lbl.config(text=weather_prediction)
+    temperature_lbl.config(text=f"{temperature}°C")
+    descr_lbl.config(text=f"{description}")
 
-    temperature_lbl.after(60000, get_weather)
-    r.update()
-    '''
+    # Load the weather icon from the URL
+    response = requests.get(icon_url)
+    icon_data = response.content
+    icon_image = Image.open(io.BytesIO(icon_data))
+    icon_photo = ImageTk.PhotoImage(icon_image)
+    icon_lbl.config(image=icon_photo)
+    icon_lbl.image = icon_photo
+
+
+def search():
+    city = selected_city.get()
+    result = get_weather(city)
+    if result is None:
+        return
+
+    icon_url, temperature, description, city = result
+    location_lbl.configure(text=f'{city}')
+
+    img = Image.open(requests.get(icon_url, stream=True).raw)
+    icon = ImageTk.PhotoImage(img)
+    icon_lbl.configure(image=icon)
+
+    temperature_lbl.configure(text=f"{temperature:.2f}°C")
+    descr_lbl.configure(text=f"{description:}")
 
 
 # elements for file in menu
@@ -107,13 +107,13 @@ file_new_frame = Frame(r, width=414, height=636, bg='#E9967A')
 # Adding logo
 logo_image = Image.open('wthrlogo1.png')
 
-# Resize the logo image if needed
+
 logo_image = logo_image.resize((300, 225))
 
-# Create a PhotoImage object using ImageTk
+# Creating a PhotoImage object using ImageTk
 logo_photo = ImageTk.PhotoImage(logo_image)
 
-# Create a Label and set the logo image as its content /// bg='#6BD5F7'
+# Creating a Label and set the logo image as its content /// bg='#6BD5F7'
 logo_label = Label(r, image=logo_photo, bg='#77DCEB')
 logo_label.pack()
 
@@ -124,41 +124,46 @@ cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya",
               "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan",
               "Erzurum",
               "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Iğdır", "Isparta", "İstanbul",
-              "İzmir",
-              "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale", "Kırklareli",
+              "İzmir","Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale",
+              "Kırklareli",
               "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş",
               "Nevşehir",
               "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas",
-              "Şırnak",
-              "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"]
+              "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"]
 
-clicked = StringVar()
-clicked.set(cities[0])
+
 # creating drop box
-drop_box = tkinter.ttk.Combobox(r, values=cities)
-drop_box.current(0)
+selected_city = StringVar()
+drop_box = tkinter.ttk.Combobox(r, values=cities, textvariable=selected_city)
 drop_box.pack(pady=20)
 
 
-
-search_btn = Button(r, text='Search', width=12, command=get_weather)
+# to search for the weather info
+search_btn = Button(r, text='Search', width=12, command=search)
 search_btn.pack()
 
 # location label
 location_lbl = Label(r, text='', font=('bold', 20), bg='#77DCEB')
 location_lbl.pack()
 
-# weather image
+# to show weather icon
+icon_lbl = tkinter.Label(r, bg='#77DCEB')
+icon_lbl.pack()
+
+# weather image - can be removed later
 image = Label(r, bitmap='', bg='#77DCEB')
 image.pack()
 
 # temperature label
-temperature_lbl = Label(r, text='', bg='#77DCEB')
+temperature_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
 temperature_lbl.pack()
 
 # weather label
 weather_lbl = Label(r, text='', bg='#77DCEB')
 weather_lbl.pack()
 
+# description label
+descr_lbl = Label(r, text='', bg='#77DCEB', font=10)
+descr_lbl.pack()
 
 r.mainloop()
