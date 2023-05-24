@@ -6,7 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 
 #url = "https://weather.com/tr-TR/weather/today/l/%C4%B0zmir+%C4%B0zmir?canonicalCityId=a3722d3ba43ddbef656021ba77ee61bf4c6fae20636732a1f2958d22beb70107"
-API_KEY = "***REMOVED***"
+keyfile = open('.apikey')
+API_KEY = keyfile.readline()
 
 # creating window
 r = Tk()
