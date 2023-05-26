@@ -5,17 +5,12 @@ from PIL import ImageTk, Image
 import requests
 from bs4 import BeautifulSoup
 
-#url = "https://weather.com/tr-TR/weather/today/l/%C4%B0zmir+%C4%B0zmir?canonicalCityId=a3722d3ba43ddbef656021ba77ee61bf4c6fae20636732a1f2958d22beb70107"
 keyfile = open('.apikey')
 API_KEY = keyfile.readline()
 
 # creating window
 r = Tk()
 r.geometry('414x636')
-# bg_image = Image.open('C:/Users/HP/OneDrive/Masaüstü/mainbg.png')
-# bg_photo = ImageTk.PhotoImage(bg_image)
-# background_label = Label(r, image=bg_photo)
-# background_label.place(x=0, y=0, relwidth=1, relheight=1)
 r.configure(bg='#77DCEB')
 r.title('Weather App')
 
@@ -47,6 +42,15 @@ def fahrenheit_to_celsius():
     pass
 
 
+def toggle_temperature_unit():
+    global temperature_unit
+    if temperature_unit == "Celsius":
+        temperature_unit = "Fahrenheit"
+    else:
+        temperature_unit = "Celsius"
+    update_temperature()
+
+    
 def get_weather(city):
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
     response = requests.get(url)
@@ -56,10 +60,12 @@ def get_weather(city):
     temperature = round(data['main']['temp'] - 273.15)
     description = data['weather'][0]['description']
     icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"
+    wind_speed = data['wind']['speed']
 
     location_lbl.config(text=location)
     temperature_lbl.config(text=f"{temperature}°C")
     descr_lbl.config(text=f"{description}")
+    wind_speed_lbl.configure(text=f"{wind_speed}m/s")
 
     # Load the weather icon from the URL
     response = requests.get(icon_url)
@@ -69,6 +75,19 @@ def get_weather(city):
     icon_lbl.config(image=icon_photo)
     icon_lbl.image = icon_photo
 
+    update_temperature()
+
+
+def update_temperature():
+    global temperature_unit
+    celsius = float(temperature_lbl.cget("text").split("°")[0])  # this extracts the current temperature in Celsius
+
+    if temperature_unit == "Celsius":
+        temperature_lbl.config(text=f"{celsius:.2f}°C")
+    else:
+        fahrenheit = celsius_to_fahrenheit(celsius)
+        temperature_lbl.config(text=f"{fahrenheit:.2f}°F")
+
 
 def search():
     city = selected_city.get()
@@ -76,15 +95,12 @@ def search():
     if result is None:
         return
 
-    icon_url, temperature, description, city = result
+    icon_url, temperature, wind_speed, description, city = result
     location_lbl.configure(text=f'{city}')
 
     img = Image.open(requests.get(icon_url, stream=True).raw)
     icon = ImageTk.PhotoImage(img)
     icon_lbl.configure(image=icon)
-
-    temperature_lbl.configure(text=f"{temperature:.2f}°C")
-    descr_lbl.configure(text=f"{description:}")
 
 
 # elements for file in menu
@@ -107,8 +123,6 @@ file_new_frame = Frame(r, width=414, height=636, bg='#E9967A')
 
 # Adding logo
 logo_image = Image.open('wthrlogo1.png')
-
-
 logo_image = logo_image.resize((300, 225))
 
 # Creating a PhotoImage object using ImageTk
@@ -142,6 +156,11 @@ drop_box.pack(pady=20)
 # to search for the weather info
 search_btn = Button(r, text='Search', width=12, command=search)
 search_btn.pack()
+
+# toggle botton to change the temperature unit
+toggle_btn = Button(r, text='Toggle Unit', width=12, bg='#F49B3D', command=toggle_temperature_unit)
+toggle_btn.config(fg='white')
+toggle_btn.pack()
 
 # location label
 location_lbl = Label(r, text='', font=('bold', 20), bg='#77DCEB')
