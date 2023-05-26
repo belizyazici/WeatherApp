@@ -39,9 +39,10 @@ def celsius_to_fahrenheit(celsius):
     return fahrenheit
 
 
-def fahrenheit_to_celsius():
-    pass
-
+def fahrenheit_to_celsius(fahrenheit):
+    celsius = (fahrenheit - 32) * 5 / 9
+    return celsius
+    
 
 def toggle_temperature_unit():
     global temperature_unit
@@ -58,17 +59,19 @@ def get_weather(city):
     data = response.json()
 
     location = data['name']
-    temperature = round(data['main']['temp'] - 273.15)
+    temperature_day = round(data['main']['temp_max'] - 273.15)
+    temperature_night = round(data['main']['temp_min'] - 273.15)
     description = data['weather'][0]['description']
-    icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"
+    icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"  # there should be image for night weather too!!!
     wind_speed = data['wind']['speed']
 
     location_lbl.config(text=location)
-    temperature_lbl.config(text=f"{temperature}°C")
+    temperature_day_lbl.config(text=f"{temperature_day}°C")
+    temperature_night_lbl.config(text=f"{temperature_night}°C")
     descr_lbl.config(text=f"{description}")
-    wind_speed_lbl.configure(text=f"{wind_speed}m/s")
+    windday_speed_lbl.configure(text=f"{wind_speed}m/s")
 
-    # Load the weather icon from the URL
+    # loading the weather icon from the URL
     response = requests.get(icon_url)
     icon_data = response.content
     icon_image = Image.open(io.BytesIO(icon_data))
@@ -81,13 +84,19 @@ def get_weather(city):
 
 def update_temperature():
     global temperature_unit
-    celsius = float(temperature_lbl.cget("text").split("°")[0])  # this extracts the current temperature in Celsius
+    celsius_day = float(temperature_day_lbl.cget("text").split("°")[0])
+    celsius_night = float(temperature_night_lbl.cget("text").split("°")[0])
 
     if temperature_unit == "Celsius":
-        temperature_lbl.config(text=f"{celsius:.2f}°C")
+        for i in range(3):
+            temperature_day_lbl.config(text=f"{celsius_day:.2f}°C")
+            temperature_night_lbl.config(text=f"{celsius_night:.2f}°C")
+
     else:
-        fahrenheit = celsius_to_fahrenheit(celsius)
-        temperature_lbl.config(text=f"{fahrenheit:.2f}°F")
+        day_fahrenheit = celsius_to_fahrenheit(celsius_day)
+        night_fahrenheit = celsius_to_fahrenheit(celsius_night)
+        temperature_day_lbl.config(text=f"{day_fahrenheit:.2f}°F")
+        temperature_night_lbl.config(text=f"{night_fahrenheit:.2f}°F")
 
 
 def search():
@@ -175,9 +184,25 @@ icon_lbl.pack()
 image = Label(r, bitmap='', bg='#77DCEB')
 image.pack()
 
-# temperature label
-temperature_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
-temperature_lbl.pack()
+# day temperature label
+temperature_day_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
+temperature_day_lbl.config(fg='#236A82')
+temperature_day_lbl.pack()  # side=LEFT, padx=40
+
+# night temperature label - labels related to night are represented with #123456 color
+temperature_night_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
+temperature_night_lbl.config(fg='#123456')
+temperature_night_lbl.pack()
+
+# wind speed label-day
+windday_speed_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
+windday_speed_lbl.config(fg='#236A82')
+windday_speed_lbl.pack()
+
+# wind speed label-night
+windnight_speed_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
+windnight_speed_lbl.config(fg='#123456')
+windnight_speed_lbl.pack()
 
 # weather label
 weather_lbl = Label(r, text='', bg='#77DCEB')
