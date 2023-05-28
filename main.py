@@ -15,6 +15,10 @@ r.geometry('414x636')
 r.configure(bg='#77DCEB')
 r.title('Weather App')
 
+temperature_unit = "Celsius" # This will be read from settings in later versions, however a Fahrenheit start breaks the code. But hey, the toggle function is somewhat working, which is nice.
+#Actually, the issue is worse. The code now simply toggles out the temperature unit and not the actual temperature if the starting point is Fahrenheit.
+#This needs further investigation, because I can't see the issue right now - Aykan
+temperature_firsthand = True # Boolean to tell the update_temperature() function whether to actually toggle the units
 
 # creating menu bar
 menubar = Menu(r)
@@ -54,6 +58,7 @@ def toggle_temperature_unit():
 
     
 def get_weather(city):
+    global temperature_firsthand
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
     response = requests.get(url)
     data = response.json()
@@ -79,21 +84,30 @@ def get_weather(city):
     icon_lbl.config(image=icon_photo)
     icon_lbl.image = icon_photo
 
+    temperature_firsthand = True # It's the correct unit, so we shouldn't have it toggled
     update_temperature()
 
 
 def update_temperature():
     global temperature_unit
+    global temperature_firsthand
     celsius_day = float(temperature_day_lbl.cget("text").split("°")[0])
     celsius_night = float(temperature_night_lbl.cget("text").split("°")[0])
 
     if temperature_unit == "Celsius":
-        for i in range(3):
-            temperature_day_lbl.config(text=f"{celsius_day:.2f}°C")
-            temperature_night_lbl.config(text=f"{celsius_night:.2f}°C")
+         #for i in range(3): #Loop disabled, there should be a better way of pulling this one off
+        if temperature_firsthand:
+            temperature_firsthand = False # This means if firsthand comes in true, the code won't toggle the unit
+        else:
+            day_celsius = fahrenheit_to_celsius(celsius_day)
+            night_celsius = fahrenheit_to_celsius(celsius_night)
+            celsius_day = day_celsius
+            celsius_night = night_celsius
+        temperature_day_lbl.config(text=f"{celsius_day:.2f}°C") #This part works with or without a toggle
+        temperature_night_lbl.config(text=f"{celsius_night:.2f}°C")
 
     else:
-        day_fahrenheit = celsius_to_fahrenheit(celsius_day)
+        day_fahrenheit = celsius_to_fahrenheit(celsius_day) # Need to make this either firsthand sensitive or do something to set it up as F
         night_fahrenheit = celsius_to_fahrenheit(celsius_night)
         temperature_day_lbl.config(text=f"{day_fahrenheit:.2f}°F")
         temperature_night_lbl.config(text=f"{night_fahrenheit:.2f}°F")
@@ -111,6 +125,7 @@ def search():
     img = Image.open(requests.get(icon_url, stream=True).raw)
     icon = ImageTk.PhotoImage(img)
     icon_lbl.configure(image=icon)
+
 
 
 # elements for file in menu
@@ -167,7 +182,7 @@ drop_box.pack(pady=20)
 search_btn = Button(r, text='Search', width=12, command=search)
 search_btn.pack()
 
-# toggle botton to change the temperature unit
+# toggle button to change the temperature unit
 toggle_btn = Button(r, text='Toggle Unit', width=12, bg='#F49B3D', command=toggle_temperature_unit)
 toggle_btn.config(fg='white')
 toggle_btn.pack()
