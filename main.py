@@ -63,29 +63,33 @@ def get_weather(city):
     response = requests.get(url)
     data = response.json()
 
-    location = data['name']
-    temperature_day = round(data['main']['temp_max'] - 273.15)
-    temperature_night = round(data['main']['temp_min'] - 273.15)
-    description = data['weather'][0]['description']
-    icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"  # there should be image for night weather too!!!
-    wind_speed = data['wind']['speed']
+        try:
+        location = data['name']
+        temperature_day = round(data['main']['temp_max'] - 273.15)
+        temperature_night = round(data['main']['temp_min'] - 273.15)
+        description = data['weather'][0]['description']
+        icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"  # there should be image for night weather too!!!
+        wind_speed = data['wind']['speed']
 
-    location_lbl.config(text=location)
-    temperature_day_lbl.config(text=f"{temperature_day}°C")
-    temperature_night_lbl.config(text=f"{temperature_night}°C")
-    descr_lbl.config(text=f"{description}")
-    windday_speed_lbl.configure(text=f"{wind_speed}m/s")
+        location_lbl.config(text=location)
+        temperature_day_lbl.config(text=f"{temperature_day}°C")
+        temperature_night_lbl.config(text=f"{temperature_night}°C")
+        descr_lbl.config(text=f"{description}")
+        windday_speed_lbl.configure(text=f"{wind_speed}m/s")
 
-    # loading the weather icon from the URL
-    response = requests.get(icon_url)
-    icon_data = response.content
-    icon_image = Image.open(io.BytesIO(icon_data))
-    icon_photo = ImageTk.PhotoImage(icon_image)
-    icon_lbl.config(image=icon_photo)
-    icon_lbl.image = icon_photo
+        # loading the weather icon from the URL
+        response = requests.get(icon_url)
+        icon_data = response.content
+        icon_image = Image.open(io.BytesIO(icon_data))
+        icon_photo = ImageTk.PhotoImage(icon_image)
+        icon_lbl.config(image=icon_photo)
+        icon_lbl.image = icon_photo
 
-    temperature_firsthand = True # It's the correct unit, so we shouldn't have it toggled
-    update_temperature()
+        temperature_firsthand = True  # It's the correct unit, so we shouldn't have it toggled
+        update_temperature()
+
+    except KeyError:
+        messagebox.showerror("Error", "City not found")
 
 
 def update_temperature():
@@ -179,7 +183,8 @@ drop_box.pack(pady=20)
 
 
 # to search for the weather info
-search_btn = Button(r, text='Search', width=12, command=search)
+search_btn = Button(r, text='Search', width=12, bg='#F49B3D', command=search)
+search_btn.config(fg='white')
 search_btn.pack()
 
 # toggle button to change the temperature unit
