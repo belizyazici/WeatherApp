@@ -5,8 +5,6 @@ import tkinter.ttk
 from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry, StringVar, messagebox
 from PIL import ImageTk, Image
 import requests
-import sys
-from bs4 import BeautifulSoup
 
 cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan",
               "Artvin",
@@ -23,15 +21,15 @@ cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya",
               "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"]
 
 try:
-    """This block deals with reading from a save. The file it looks for is 'settings.was' (stands for *W*eather
-    *A*pp *S*ettings). The file should have two lines, the first containing 'temperature_unit=something'
+    """This block deals with reading from a save. The file it looks for is 'settings.txt'.
+    The file should have two lines, the first containing 'temperature_unit=something'
     and the second containing 'fav_city=anotherthing'. The guide words are there to ease manual editing, and not actually
     required. The system regenerates the guides on save. The first line must be either 'Celsius' or 'Fahrenheit',
     and the second must be in the list above. In any case the reading section goes wrong,
     the tempunit defaults to 'Celsius' and fav_city defaults to an empty string."""
 
     print("-----LOADING PREFERENCES-----")
-    settings = open('settings.was', encoding='utf-8') # Make sure all file operations are encoded with UTF-8. Turkish characters otherwise get to be an issue.
+    settings = open('settings.txt', encoding='utf-8') # Make sure all file operations are encoded with UTF-8. Turkish characters otherwise get to be an issue.
     settinglist = settings.readlines()
     settings.close()
 
@@ -80,6 +78,34 @@ except:
     print("API keyfile cannot be read. Make sure that .apikey file exists and the file contains only the key string.")
     exit(0)
 
+class Temperature:
+
+    temp_value = 0.0
+    temp_unit = "Celsius"
+
+    def __init__(self, tval=0.0, tunit ="Celsius"):
+        if isinstance(self.temp_value, float):
+            self.temp_value = tval
+        if tunit == "Celsius" or tunit == "Fahrenheit":
+            self.temp_unit = tunit
+
+    def toggle(self):
+        if self.temp_unit == "Celsius":
+            self.temp_value = celsius_to_fahrenheit(self.temp_value)
+            self.temp_unit = "Fahrenheit"
+
+        elif self.temp_unit == "Fahrenheit":
+            self.temp_value = fahrenheit_to_celsius(self.temp_value)
+            self.temp_unit = "Celsius"
+
+    def print(self):
+        print("Temperature: " + str(self.temp_value))
+        print("Unit: " + self.temp_unit)
+
+day_temp = Temperature(0.0, tempunit)
+night_temp = Temperature(0.0, tempunit)
+day_temp_holder = Temperature()
+night_temp_holder = Temperature()
 
 # creating window
 r = Tk()
@@ -87,11 +113,6 @@ r.geometry('414x636')
 r.configure(bg='#77DCEB')
 r.title('Weather App')
 
-temperature_unit = "Celsius" # This will be read from settings in later versions, however a Fahrenheit start breaks the code. But hey, the toggle function is somewhat working, which is nice.
-#Actually, the issue is worse. The code now simply toggles out the temperature unit and not the actual temperature if the starting point is Fahrenheit.
-#This needs further investigation, because I can't see the issue right now - Aykan
-temperature_firsthand = True # Boolean to tell the update_temperature() function whether to actually toggle the units
-# creating menu bar
 menubar = Menu(r)
 r.config(menu=menubar)
 
@@ -120,31 +141,54 @@ def fahrenheit_to_celsius(fahrenheit):
     
 
 def toggle_temperature_unit():
-    global temperature_unit
-    if temperature_unit == "Celsius":
-        temperature_unit = "Fahrenheit"
+    day_temp.toggle()
+    night_temp.toggle()
+
+    if day_temp.temp_unit == "Celsius":
+        temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°C")
     else:
-        temperature_unit = "Celsius"
-    update_temperature()
+        temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°F")
+
+    if night_temp.temp_unit == "Celsius":
+        temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°C")
+    else:
+        temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°F")
+
 
     
 def get_weather(city):
-    global temperature_firsthand
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
     response = requests.get(url)
     data = response.json()
 
     try:
         location = data['name']
-        temperature_day = round(data['main']['temp_max'] - 273.15)
-        temperature_night = round(data['main']['temp_min'] - 273.15)
+        day_temp_holder.temp_unit = "Celsius" # Resetting holders to Celsius in case they're stuck at Fahrenheit from a prior call
+        night_temp_holder.temp_unit = "Celsius"
+        day_temp_holder.temp_value = round(data['main']['temp_max'] - 273.15) # This data always starts out as Kelvin, so -273.15 degrees to convert to Celsius
+        night_temp_holder.temp_value = round(data['main']['temp_min'] - 273.15)
         description = data['weather'][0]['description']
         icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"  # there should be image for night weather too!!!
         wind_speed = data['wind']['speed']
 
+        if day_temp.temp_unit == "Fahrenheit":
+            day_temp_holder.toggle()
+        if night_temp.temp_unit == "Fahrenheit":
+            night_temp_holder.toggle()
+
+        day_temp.temp_value = day_temp_holder.temp_value
+        night_temp.temp_value = night_temp_holder.temp_value
+
         location_lbl.config(text=location)
-        temperature_day_lbl.config(text=f"{temperature_day}°C")
-        temperature_night_lbl.config(text=f"{temperature_night}°C")
+        if day_temp.temp_unit == "Celsius":
+            temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°C")
+        else:
+            temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°F")
+
+        if night_temp.temp_unit == "Celsius":
+            temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°C")
+        else:
+            temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°F")
         descr_lbl.config(text=f"{description}")
         windday_speed_lbl.configure(text=f"{wind_speed}m/s")
 
@@ -156,41 +200,15 @@ def get_weather(city):
         icon_lbl.config(image=icon_photo)
         icon_lbl.image = icon_photo
 
-        temperature_firsthand = True  # It's the correct unit, so we shouldn't have it toggled
-        update_temperature()
-
     except KeyError:
         messagebox.showerror("Error", "City not found")
 
-
-def update_temperature():
-    global temperature_unit
-    global temperature_firsthand
-    celsius_day = float(temperature_day_lbl.cget("text").split("°")[0])
-    celsius_night = float(temperature_night_lbl.cget("text").split("°")[0])
-
-    if temperature_unit == "Celsius":
-        if temperature_firsthand:
-            temperature_firsthand = False # This means if firsthand comes in true, the code won't toggle the unit
-        else:
-            day_celsius = fahrenheit_to_celsius(celsius_day)
-            night_celsius = fahrenheit_to_celsius(celsius_night)
-            celsius_day = day_celsius
-            celsius_night = night_celsius
-        temperature_day_lbl.config(text=f"{celsius_day:.2f}°C") #This part works with or without a toggle
-        temperature_night_lbl.config(text=f"{celsius_night:.2f}°C")
-
-    else:
-        day_fahrenheit = celsius_to_fahrenheit(celsius_day) # Need to make this either firsthand sensitive or do something to set it up as F
-        night_fahrenheit = celsius_to_fahrenheit(celsius_night)
-        temperature_day_lbl.config(text=f"{day_fahrenheit:.2f}°F")
-        temperature_night_lbl.config(text=f"{night_fahrenheit:.2f}°F")
 
 def save(temperatureunit, favoritecity):
     """This one handles saving to the file. It pulls the current city's name and the unit of temperature,
     and then **overwrites** the settings file with the strings, with the guides added."""
 
-    savesettings = open('settings.was', 'w', encoding='utf-8')
+    savesettings = open('settings.txt', 'w', encoding='utf-8')
     temperatureunit_guide = 'temperature_unit=' + temperatureunit
     favoritecity_guide = 'fav_city=' + favoritecity
     savesettings.write(temperatureunit_guide)
@@ -220,9 +238,10 @@ def on_close():
     print("-----SHUTTING DOWN-----")
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
         print("-----SAVING PREFERENCES-----")
-        print("Current city: " + location_lbl.cget("text"))
-        print("Temp unit: " + temperature_unit) # TODO: Grab this from temperature object instead.
-        save(tempunit,location_lbl.cget("text"))
+        if location_lbl.cget("text") != "":
+            print("Current city: " + location_lbl.cget("text").split()[0])
+        print("Temp unit: " + day_temp.temp_unit)
+        save(day_temp.temp_unit, location_lbl.cget("text"))
         print("-----SAVING PREFERENCES DONE-----")
         r.destroy()
 
@@ -314,7 +333,9 @@ descr_lbl = Label(r, text='', bg='#77DCEB', font=10)
 descr_lbl.pack()
 
 print("-----STARTING TK WINDOW-----")
+
 r.protocol("WM_DELETE_WINDOW", on_close) # Run on_close when the window is about to be destroyed
-get_weather(favcity)
+if favcity != "":
+    get_weather(favcity) # Initializes the program with the fav_city if there is one
 r.mainloop()
 
