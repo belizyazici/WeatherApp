@@ -1,13 +1,85 @@
 # Beliz Yazıcı-20210601066, Aykan Berk Ayvazoğlu-20210601007, Utku Mert Çırakoğlu-20210601017
+# -*- coding: utf-8 -*-
 import io
 import tkinter.ttk
 from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry, StringVar, messagebox
 from PIL import ImageTk, Image
 import requests
+import sys
 from bs4 import BeautifulSoup
 
-keyfile = open('.apikey')
-API_KEY = keyfile.readline()
+cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan",
+              "Artvin",
+              "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur",
+              "Bursa",
+              "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan",
+              "Erzurum",
+              "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Iğdır", "Isparta", "İstanbul",
+              "İzmir","Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale",
+              "Kırklareli",
+              "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş",
+              "Nevşehir",
+              "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas",
+              "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"]
+
+try:
+    """This block deals with reading from a save. The file it looks for is 'settings.was' (stands for *W*eather
+    *A*pp *S*ettings). The file should have two lines, the first containing 'temperature_unit=something'
+    and the second containing 'fav_city=anotherthing'. The guide words are there to ease manual editing, and not actually
+    required. The system regenerates the guides on save. The first line must be either 'Celsius' or 'Fahrenheit',
+    and the second must be in the list above. In any case the reading section goes wrong,
+    the tempunit defaults to 'Celsius' and fav_city defaults to an empty string."""
+
+    print("-----LOADING PREFERENCES-----")
+    settings = open('settings.was', encoding='utf-8') # Make sure all file operations are encoded with UTF-8. Turkish characters otherwise get to be an issue.
+    settinglist = settings.readlines()
+    settings.close()
+
+    # Formatting the strings, stripping \n and guiding objects, technically, if the guides don't exist, it won't matter
+    settinglist[0] = settinglist[0].replace('temperature_unit=','')
+    settinglist[0] = settinglist[0].rstrip()
+    settinglist[1] = settinglist[1].replace('fav_city=','')
+    settinglist[1] = settinglist[1].split()[0] # Take first word only, because the API returns "... Province" on some cities
+    settinglist[1] = settinglist[1].rstrip()
+
+    if settinglist[0] == "Celsius" or settinglist[0] == "Fahrenheit": # The 'or' clauses need to be separate, or unintended effects occur
+        tempunit = settinglist[0]
+        print("Temperature setting read from file: " + settinglist[0])
+    else:
+        tempunit = "C" # Assures that C is used if anything goes wrong with it
+    if settinglist[1] in cities:
+        favcity = settinglist[1]
+        print("Favorite city read from file: " + favcity)
+
+except FileNotFoundError:
+    print("File not found. Loading defaults...")
+    tempunit = "C"
+    favcity = ""
+except IndexError:
+    print("File is not valid. Loading defaults...")
+    tempunit = "C"
+    favcity = ""
+    settings.close()
+
+print("-----LOADING PREFERENCES DONE-----")
+
+try:
+    """This block here loads an API key to the memory to use with the system. It currently checks if it
+    can read from the file, as well as if the pulled string is nonempty. It does not check the validity
+    of the API key. This check could be added, however, we are already shipping this project with a key
+    and there shouldn't be any complications whatsoever about this."""
+
+    print("-----LOADING API KEY-----")
+    keyfile = open('.apikey')
+    API_KEY = keyfile.readline()
+    if API_KEY != '':
+        print("Content read from .apikey file.")
+    keyfile.close()
+    print("-----LOADING API KEY DONE-----")
+except:
+    print("API keyfile cannot be read. Make sure that .apikey file exists and the file contains only the key string.")
+    exit(0)
+
 
 # creating window
 r = Tk()
@@ -19,7 +91,6 @@ temperature_unit = "Celsius" # This will be read from settings in later versions
 #Actually, the issue is worse. The code now simply toggles out the temperature unit and not the actual temperature if the starting point is Fahrenheit.
 #This needs further investigation, because I can't see the issue right now - Aykan
 temperature_firsthand = True # Boolean to tell the update_temperature() function whether to actually toggle the units
-
 # creating menu bar
 menubar = Menu(r)
 r.config(menu=menubar)
@@ -63,7 +134,7 @@ def get_weather(city):
     response = requests.get(url)
     data = response.json()
 
-        try:
+    try:
         location = data['name']
         temperature_day = round(data['main']['temp_max'] - 273.15)
         temperature_night = round(data['main']['temp_min'] - 273.15)
@@ -99,7 +170,6 @@ def update_temperature():
     celsius_night = float(temperature_night_lbl.cget("text").split("°")[0])
 
     if temperature_unit == "Celsius":
-         #for i in range(3): #Loop disabled, there should be a better way of pulling this one off
         if temperature_firsthand:
             temperature_firsthand = False # This means if firsthand comes in true, the code won't toggle the unit
         else:
@@ -116,6 +186,19 @@ def update_temperature():
         temperature_day_lbl.config(text=f"{day_fahrenheit:.2f}°F")
         temperature_night_lbl.config(text=f"{night_fahrenheit:.2f}°F")
 
+def save(temperatureunit, favoritecity):
+    """This one handles saving to the file. It pulls the current city's name and the unit of temperature,
+    and then **overwrites** the settings file with the strings, with the guides added."""
+
+    savesettings = open('settings.was', 'w', encoding='utf-8')
+    temperatureunit_guide = 'temperature_unit=' + temperatureunit
+    favoritecity_guide = 'fav_city=' + favoritecity
+    savesettings.write(temperatureunit_guide)
+    savesettings.write('\n')
+    favoritecity_guide_enc = favoritecity_guide.encode('utf-8')
+    savesettings.write(favoritecity_guide_enc.decode('utf-8'))
+    savesettings.close()
+
 
 def search():
     city = selected_city.get()
@@ -130,7 +213,18 @@ def search():
     icon = ImageTk.PhotoImage(img)
     icon_lbl.configure(image=icon)
 
+def on_close():
+    """Any exit operations go here. The exits caught by this function are soft exits, e.g. pressing X or Menu ->Exit
+    This part does not work on hard exits such as Alt+F4, the stop button (if on an IDE) or a hammer to the computer."""
 
+    print("-----SHUTTING DOWN-----")
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        print("-----SAVING PREFERENCES-----")
+        print("Current city: " + location_lbl.cget("text"))
+        print("Temp unit: " + temperature_unit) # TODO: Grab this from temperature object instead.
+        save(tempunit,location_lbl.cget("text"))
+        print("-----SAVING PREFERENCES DONE-----")
+        r.destroy()
 
 # elements for file in menu
 file = Menu(menubar)
@@ -161,20 +255,7 @@ logo_photo = ImageTk.PhotoImage(logo_image)
 logo_label = Label(r, image=logo_photo, bg='#77DCEB')
 logo_label.pack()
 
-cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan",
-              "Artvin",
-              "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur",
-              "Bursa",
-              "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan",
-              "Erzurum",
-              "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Iğdır", "Isparta", "İstanbul",
-              "İzmir","Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale",
-              "Kırklareli",
-              "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş",
-              "Nevşehir",
-              "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Şanlıurfa", "Siirt", "Sinop", "Sivas",
-              "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"]
-
+# Cities taken above to be used in init
 
 # creating drop box
 selected_city = StringVar()
@@ -232,4 +313,8 @@ weather_lbl.pack()
 descr_lbl = Label(r, text='', bg='#77DCEB', font=10)
 descr_lbl.pack()
 
+print("-----STARTING TK WINDOW-----")
+r.protocol("WM_DELETE_WINDOW", on_close) # Run on_close when the window is about to be destroyed
+get_weather(favcity)
 r.mainloop()
+
