@@ -52,11 +52,11 @@ try:
 
 except FileNotFoundError:
     print("File not found. Loading defaults...")
-    tempunit = "C"
+    tempunit = "Celsius"
     favcity = ""
 except IndexError:
     print("File is not valid. Loading defaults...")
-    tempunit = "C"
+    tempunit = "Celsius"
     favcity = ""
     settings.close()
 
@@ -86,6 +86,8 @@ class Temperature:
     wind_speed = 0.0
     temp_unit = "Celsius"
     temp_time = date(1,1,1)
+    temp_icon = ""
+    temp_desc = ""
 
     def __init__(self, dtval=0.0, ntval=0.0, wspeed=0.0, tunit="Celsius", dtime=date.today()):
         if isinstance(dtval, float):
@@ -138,7 +140,7 @@ night_temp_holder = Temperature()
 
 # creating window
 r = Tk()
-r.geometry('414x636')
+r.geometry('900x636')
 r.configure(bg='#77DCEB')
 r.title('Weather App')
 
@@ -177,13 +179,17 @@ def toggle_temperature_unit():
     if today_temp.temp_unit == "Celsius": # Needs to be updated to correct labeling
         temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°C")
         temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°C")
+        temperature1_day_lbl.config(text=f"{round(tomorrow_temp.day_temp_value, 1)}°C")
+        temperature1_night_lbl.config(text=f"{round(tomorrow_temp.night_temp_value, 1)}°C")
+        temperature2_day_lbl.config(text=f"{round(dayaftertomorrow_temp.day_temp_value, 1)}°C")
+        temperature2_night_lbl.config(text=f"{round(dayaftertomorrow_temp.night_temp_value, 1)}°C")
     else:
         temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°F")
         temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°F")
-
-    for t in futuredays:
-        t.print()
-    today_temp.print()
+        temperature1_day_lbl.config(text=f"{round(tomorrow_temp.day_temp_value, 1)}°F")
+        temperature1_night_lbl.config(text=f"{round(tomorrow_temp.night_temp_value, 1)}°F")
+        temperature2_day_lbl.config(text=f"{round(dayaftertomorrow_temp.day_temp_value, 1)}°F")
+        temperature2_night_lbl.config(text=f"{round(dayaftertomorrow_temp.night_temp_value, 1)}°F")
 
 
     
@@ -191,7 +197,6 @@ def get_weather(city):
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
     response = requests.get(url)
     data = response.json()
-
 
     try:
         location = data['name']
@@ -213,9 +218,6 @@ def get_weather(city):
         global tomorrow_temp
         global dayaftertomorrow_temp
         global futuredays
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
-        response = requests.get(url)
-        data = response.json()
 
         dayurl = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}"
         dresponse = requests.get(dayurl).json()
@@ -226,6 +228,9 @@ def get_weather(city):
             for x in dresponse['list']:
                 if dt.fromtimestamp(x['dt']).date() == (date_var):
                     tomorrowstamps.append(x)
+
+            futuredays[date_ctr].temp_icon = f"http://openweathermap.org/img/w/{tomorrowstamps[3]['weather'][0]['icon']}.png"
+            futuredays[date_ctr].temp_desc = tomorrowstamps[3]['weather'][0]['description']
 
             if futuredays[date_ctr].temp_unit == "Celsius":
                 futuredays[date_ctr].day_temp_value = round(
@@ -252,13 +257,29 @@ def get_weather(city):
         if today_temp.temp_unit == "Celsius":
             temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°C")
             temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°C")
+            temperature1_day_lbl.config(text=f"{round(tomorrow_temp.day_temp_value, 1)}°C")
+            temperature1_night_lbl.config(text=f"{round(tomorrow_temp.night_temp_value, 1)}°C")
+            temperature2_day_lbl.config(text=f"{round(dayaftertomorrow_temp.day_temp_value, 1)}°C")
+            temperature2_night_lbl.config(text=f"{round(dayaftertomorrow_temp.night_temp_value, 1)}°C")
         else:
             temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°F")
             temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°F")
+            temperature1_day_lbl.config(text=f"{round(tomorrow_temp.day_temp_value, 1)}°F")
+            temperature1_night_lbl.config(text=f"{round(tomorrow_temp.night_temp_value, 1)}°F")
+            temperature2_day_lbl.config(text=f"{round(dayaftertomorrow_temp.day_temp_value, 1)}°F")
+            temperature2_night_lbl.config(text=f"{round(dayaftertomorrow_temp.night_temp_value, 1)}°F")
 
         descr_lbl.config(text=f"{description}")
         date_lbl.config(text=f"{today_temp.temp_time}")
         windday_speed_lbl.configure(text=f"{today_temp.wind_speed}m/s")
+
+        descr1_lbl.config(text=f"{tomorrow_temp.temp_desc}")
+        date1_lbl.config(text=f"{tomorrow_temp.temp_time}")
+        windday1_speed_lbl.configure(text=f"{tomorrow_temp.wind_speed}m/s")
+
+        descr2_lbl.config(text=f"{dayaftertomorrow_temp.temp_desc}")
+        date2_lbl.config(text=f"{dayaftertomorrow_temp.temp_time}")
+        windday2_speed_lbl.configure(text=f"{dayaftertomorrow_temp.wind_speed}m/s")
 
         # loading the weather icon from the URL
         response = requests.get(icon_url)
@@ -268,9 +289,19 @@ def get_weather(city):
         icon_lbl.config(image=icon_photo)
         icon_lbl.image = icon_photo
 
-        for t in futuredays: # Replace these with correct frame functions
-            t.print()
-        today_temp.print()
+        response1 = requests.get(tomorrow_temp.temp_icon)
+        icon_data1 = response1.content
+        icon_image1 = Image.open(io.BytesIO(icon_data1))
+        icon_photo1 = ImageTk.PhotoImage(icon_image1)
+        icon1_lbl.config(image=icon_photo1)
+        icon1_lbl.image = icon_photo1
+
+        response2 = requests.get(dayaftertomorrow_temp.temp_icon)
+        icon_data2 = response2.content
+        icon_image2 = Image.open(io.BytesIO(icon_data2))
+        icon_photo2 = ImageTk.PhotoImage(icon_image2)
+        icon2_lbl.config(image=icon_photo2)
+        icon2_lbl.image = icon_photo2
 
     except KeyError:
         messagebox.showerror("Error", "City not found")
@@ -395,10 +426,6 @@ windday_speed_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
 windday_speed_lbl.config(fg='#236A82')
 windday_speed_lbl.pack()
 
-# wind speed label-night
-windnight_speed_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
-windnight_speed_lbl.config(fg='#123456')
-windnight_speed_lbl.pack()
 
 # weather label
 weather_lbl = Label(r, text='', bg='#77DCEB')
@@ -407,6 +434,109 @@ weather_lbl.pack()
 # description label
 descr_lbl = Label(r, text='', bg='#77DCEB', font=10)
 descr_lbl.pack()
+
+frame = Frame(r, width = 200, height=6362, bg='#77DCEB')
+frame.place(x=700, y=0)
+
+first_f = Frame(r, width=100, height=110, bg="#77DCEB")
+first_f.place(x=750, y=25)
+
+# description label
+indi1_lbl = Label(first_f, text='Tomorrow', bg='#77DCEB', font=10)
+indi1_lbl.pack()
+
+# location label
+location1_lbl = Label(first_f, text='', font=('bold', 20), bg='#77DCEB')
+location1_lbl.pack()
+
+# to show date
+date1_lbl = tkinter.Label(first_f, text='', bg='#77DCEB', font=('bold', 14))
+date1_lbl.pack()
+
+# to show weather icon
+icon1_lbl = tkinter.Label(first_f, bg='#77DCEB')
+icon1_lbl.pack()
+
+# weather image - can be removed later
+image1 = Label(first_f, bitmap='', bg='#77DCEB')
+image1.pack()
+
+# day temperature label
+temperature1_day_lbl = Label(first_f, text='', bg='#77DCEB', font=('bold', 14))
+temperature1_day_lbl.config(fg='#236A82')
+temperature1_day_lbl.pack()  # side=LEFT, padx=40
+
+# night temperature label - labels related to night are represented with #123456 color
+temperature1_night_lbl = Label(first_f, text='', bg='#77DCEB', font=('bold', 14))
+temperature1_night_lbl.config(fg='#123456')
+temperature1_night_lbl.pack()
+
+# wind speed label-day
+windday1_speed_lbl = Label(first_f, text='', bg='#77DCEB', font=('bold', 14))
+windday1_speed_lbl.config(fg='#236A82')
+windday1_speed_lbl.pack()
+
+# weather label
+weather1_lbl = Label(first_f, text='', bg='#77DCEB')
+weather1_lbl.pack()
+
+# description label
+descr1_lbl = Label(first_f, text='', bg='#77DCEB', font=10)
+descr1_lbl.pack()
+
+day1 = Label(first_f, font="arial 20", bg='#282829', fg='#fff')
+day1.place(x=765, y=5)
+
+scnd_f = Frame(r, width=100, height=115, bg="#77DCEB")
+scnd_f.place(x=750, y=335)
+
+# description label
+indi2_lbl = Label(scnd_f, text='Next Day', bg='#77DCEB', font=10)
+indi2_lbl.pack()
+
+# location label
+location2_lbl = Label(scnd_f, text='', font=('bold', 20), bg='#77DCEB')
+location2_lbl.pack()
+
+# to show date
+date2_lbl = tkinter.Label(scnd_f, text='', bg='#77DCEB', font=('bold', 14))
+date2_lbl.pack()
+
+# to show weather icon
+icon2_lbl = tkinter.Label(scnd_f, bg='#77DCEB')
+icon2_lbl.pack()
+
+# weather image - can be removed later
+image2 = Label(scnd_f, bitmap='', bg='#77DCEB')
+image2.pack()
+
+# day temperature label
+temperature2_day_lbl = Label(scnd_f, text='', bg='#77DCEB', font=('bold', 14))
+temperature2_day_lbl.config(fg='#236A82')
+temperature2_day_lbl.pack()  # side=LEFT, padx=40
+
+
+# night temperature label - labels related to night are represented with #123456 color
+temperature2_night_lbl = Label(scnd_f, text='', bg='#77DCEB', font=('bold', 14))
+temperature2_night_lbl.config(fg='#123456')
+temperature2_night_lbl.pack()
+
+# wind speed label-day
+windday2_speed_lbl = Label(scnd_f, text='', bg='#77DCEB', font=('bold', 14))
+windday2_speed_lbl.config(fg='#236A82')
+windday2_speed_lbl.pack()
+
+
+# weather label
+weather2_lbl = Label(scnd_f, text='', bg='#77DCEB')
+weather2_lbl.pack()
+
+# description label
+descr2_lbl = Label(scnd_f, text='', bg='#77DCEB', font=10)
+descr2_lbl.pack()
+
+day3 = Label(scnd_f, font="arial 20", bg='#77DCEB', fg='#fff')
+day3.place(x=765, y=5)
 
 print("-----STARTING TK WINDOW-----")
 
