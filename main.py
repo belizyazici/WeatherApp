@@ -5,6 +5,7 @@ import tkinter.ttk
 from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry, StringVar, messagebox
 from PIL import ImageTk, Image
 import requests
+from datetime import datetime as dt, timedelta, date
 
 cities = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan",
               "Artvin",
@@ -80,30 +81,58 @@ except:
 
 class Temperature:
 
-    temp_value = 0.0
+    day_temp_value = 0.0
+    night_temp_value = 0.0
+    wind_speed = 0.0
     temp_unit = "Celsius"
+    temp_time = date(1,1,1)
 
-    def __init__(self, tval=0.0, tunit ="Celsius"):
-        if isinstance(self.temp_value, float):
-            self.temp_value = tval
+    def __init__(self, dtval=0.0, ntval=0.0, wspeed=0.0, tunit="Celsius", dtime=date.today()):
+        if isinstance(dtval, float):
+            self.day_temp_value = dtval
+        if isinstance(ntval, float):
+            self.night_temp_value = ntval
+        if isinstance(wspeed, float):
+            self.wind_speed = wspeed
         if tunit == "Celsius" or tunit == "Fahrenheit":
             self.temp_unit = tunit
+        if isinstance(dtime, dt):
+            self.temp_time = dtime
 
     def toggle(self):
         if self.temp_unit == "Celsius":
-            self.temp_value = celsius_to_fahrenheit(self.temp_value)
+            self.day_temp_value = celsius_to_fahrenheit(self.day_temp_value)
+            self.night_temp_value = celsius_to_fahrenheit(self.night_temp_value)
             self.temp_unit = "Fahrenheit"
 
         elif self.temp_unit == "Fahrenheit":
-            self.temp_value = fahrenheit_to_celsius(self.temp_value)
+            self.day_temp_value = fahrenheit_to_celsius(self.day_temp_value)
+            self.night_temp_value = fahrenheit_to_celsius(self.night_temp_value)
             self.temp_unit = "Celsius"
 
     def print(self):
-        print("Temperature: " + str(self.temp_value))
+        print("Date: " + str(self.temp_time))
+        print("Day temperature: " + str(self.day_temp_value))
+        print("Night temperature: " + str(self.night_temp_value))
         print("Unit: " + self.temp_unit)
+        print("Wind speed: " + str(self.wind_speed) + " m/s")
 
-day_temp = Temperature(0.0, tempunit)
-night_temp = Temperature(0.0, tempunit)
+#Initializing objects
+today_temp = Temperature()
+today_temp.temp_time = date.today()
+today_temp.temp_unit = tempunit
+
+tomorrow_temp = Temperature()
+tomorrow_temp.temp_time = (date.today() + timedelta(days=1))
+tomorrow_temp.temp_unit = tempunit
+
+dayaftertomorrow_temp = Temperature()
+dayaftertomorrow_temp.temp_time = (date.today() + timedelta(days=2))
+dayaftertomorrow_temp.temp_unit = tempunit
+
+threedays = [today_temp, tomorrow_temp, dayaftertomorrow_temp]
+futuredays = [tomorrow_temp, dayaftertomorrow_temp]
+
 day_temp_holder = Temperature()
 night_temp_holder = Temperature()
 
@@ -141,18 +170,20 @@ def fahrenheit_to_celsius(fahrenheit):
     
 
 def toggle_temperature_unit():
-    day_temp.toggle()
-    night_temp.toggle()
+    global threedays
+    for x in threedays:
+        x.toggle()
 
-    if day_temp.temp_unit == "Celsius":
-        temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°C")
+    if today_temp.temp_unit == "Celsius": # Needs to be updated to correct labeling
+        temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°C")
+        temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°C")
     else:
-        temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°F")
+        temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°F")
+        temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°F")
 
-    if night_temp.temp_unit == "Celsius":
-        temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°C")
-    else:
-        temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°F")
+    for t in futuredays:
+        t.print()
+    today_temp.print()
 
 
     
@@ -165,32 +196,67 @@ def get_weather(city):
         location = data['name']
         day_temp_holder.temp_unit = "Celsius" # Resetting holders to Celsius in case they're stuck at Fahrenheit from a prior call
         night_temp_holder.temp_unit = "Celsius"
-        day_temp_holder.temp_value = round(data['main']['temp_max'] - 273.15) # This data always starts out as Kelvin, so -273.15 degrees to convert to Celsius
-        night_temp_holder.temp_value = round(data['main']['temp_min'] - 273.15)
+        day_temp_holder.day_temp_value = round(data['main']['temp_max'] - 273.15) # This data always starts out as Kelvin, so -273.15 degrees to convert to Celsius
+        night_temp_holder.night_temp_value = round(data['main']['temp_min'] - 273.15)
         description = data['weather'][0]['description']
         icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"  # there should be image for night weather too!!!
-        wind_speed = data['wind']['speed']
+        today_temp.wind_speed = data['wind']['speed']
 
-        if day_temp.temp_unit == "Fahrenheit":
+        if today_temp.temp_unit == "Fahrenheit":
             day_temp_holder.toggle()
-        if night_temp.temp_unit == "Fahrenheit":
             night_temp_holder.toggle()
 
-        day_temp.temp_value = day_temp_holder.temp_value
-        night_temp.temp_value = night_temp_holder.temp_value
+        today_temp.day_temp_value = day_temp_holder.day_temp_value
+        today_temp.night_temp_value = night_temp_holder.night_temp_value
+
+        global tomorrow_temp
+        global dayaftertomorrow_temp
+        global futuredays
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
+        response = requests.get(url)
+        data = response.json()
+
+        dayurl = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}"
+        dresponse = requests.get(dayurl).json()
+        date_var = (date.today() + timedelta(days=1))
+        date_ctr = 0
+        while date_var <= (date.today() + timedelta(days=2)):
+            tomorrowstamps = []
+            for x in dresponse['list']:
+                if dt.fromtimestamp(x['dt']).date() == (date_var):
+                    tomorrowstamps.append(x)
+
+            if futuredays[date_ctr].temp_unit == "Celsius":
+                futuredays[date_ctr].day_temp_value = round(
+                    ((tomorrowstamps[3]['main']['temp_min'] + tomorrowstamps[3]['main']['temp_max']) / 2) - 273.15, 2)
+                futuredays[date_ctr].night_temp_value = round(
+                    ((tomorrowstamps[7]['main']['temp_min'] + tomorrowstamps[7]['main']['temp_max']) / 2) - 273.15, 2)
+                futuredays[date_ctr].wind_speed = round(
+                    (tomorrowstamps[3]['wind']['speed'] + tomorrowstamps[7]['wind']['speed']) / 2, 2)
+
+            if futuredays[date_ctr].temp_unit == "Fahrenheit":
+                futuredays[date_ctr].toggle()  # Sets it back to C
+                futuredays[date_ctr].day_temp_value = round(
+                    ((tomorrowstamps[3]['main']['temp_min'] + tomorrowstamps[3]['main']['temp_max']) / 2) - 273.15, 2)
+                futuredays[date_ctr].night_temp_value = round(
+                    ((tomorrowstamps[7]['main']['temp_min'] + tomorrowstamps[7]['main']['temp_max']) / 2) - 273.15, 2)
+                futuredays[date_ctr].wind_speed = round(
+                    (tomorrowstamps[3]['wind']['speed'] + tomorrowstamps[7]['wind']['speed']) / 2, 2)
+                futuredays[date_ctr].toggle()  # Toggles all above values to F
+
+            date_var += timedelta(days=1)
+            date_ctr += 1
 
         location_lbl.config(text=location)
-        if day_temp.temp_unit == "Celsius":
-            temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°C")
+        if today_temp.temp_unit == "Celsius":
+            temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°C")
+            temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°C")
         else:
-            temperature_day_lbl.config(text=f"{round(day_temp.temp_value,1)}°F")
+            temperature_day_lbl.config(text=f"{round(today_temp.day_temp_value,1)}°F")
+            temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°F")
 
-        if night_temp.temp_unit == "Celsius":
-            temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°C")
-        else:
-            temperature_night_lbl.config(text=f"{round(night_temp.temp_value,1)}°F")
         descr_lbl.config(text=f"{description}")
-        windday_speed_lbl.configure(text=f"{wind_speed}m/s")
+        windday_speed_lbl.configure(text=f"{today_temp.wind_speed}m/s")
 
         # loading the weather icon from the URL
         response = requests.get(icon_url)
@@ -235,13 +301,13 @@ def on_close():
     """Any exit operations go here. The exits caught by this function are soft exits, e.g. pressing X or Menu ->Exit
     This part does not work on hard exits such as Alt+F4, the stop button (if on an IDE) or a hammer to the computer."""
 
-    print("-----SHUTTING DOWN-----")
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        print("-----SHUTTING DOWN-----")
         print("-----SAVING PREFERENCES-----")
         if location_lbl.cget("text") != "":
             print("Current city: " + location_lbl.cget("text").split()[0])
-        print("Temp unit: " + day_temp.temp_unit)
-        save(day_temp.temp_unit, location_lbl.cget("text"))
+        print("Temp unit: " + today_temp.temp_unit)
+        save(today_temp.temp_unit, location_lbl.cget("text"))
         print("-----SAVING PREFERENCES DONE-----")
         r.destroy()
 
@@ -337,5 +403,7 @@ print("-----STARTING TK WINDOW-----")
 r.protocol("WM_DELETE_WINDOW", on_close) # Run on_close when the window is about to be destroyed
 if favcity != "":
     get_weather(favcity) # Initializes the program with the fav_city if there is one
+
+
 r.mainloop()
 
