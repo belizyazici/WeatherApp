@@ -192,6 +192,7 @@ def get_weather(city):
     response = requests.get(url)
     data = response.json()
 
+
     try:
         location = data['name']
         day_temp_holder.temp_unit = "Celsius" # Resetting holders to Celsius in case they're stuck at Fahrenheit from a prior call
@@ -256,6 +257,7 @@ def get_weather(city):
             temperature_night_lbl.config(text=f"{round(today_temp.night_temp_value, 1)}°F")
 
         descr_lbl.config(text=f"{description}")
+        date_lbl.config(text=f"{today_temp.temp_time}")
         windday_speed_lbl.configure(text=f"{today_temp.wind_speed}m/s")
 
         # loading the weather icon from the URL
@@ -300,7 +302,6 @@ def search():
     img = Image.open(requests.get(icon_url, stream=True).raw)
     icon = ImageTk.PhotoImage(img)
     icon_lbl.configure(image=icon)
-
 
 
 def on_close():
@@ -366,6 +367,10 @@ toggle_btn.pack()
 location_lbl = Label(r, text='', font=('bold', 20), bg='#77DCEB')
 location_lbl.pack()
 
+# to show date
+date_lbl = tkinter.Label(r, text='', bg='#77DCEB', font=('bold', 14))
+date_lbl.pack()
+
 # to show weather icon
 icon_lbl = tkinter.Label(r, bg='#77DCEB')
 icon_lbl.pack()
@@ -378,6 +383,7 @@ image.pack()
 temperature_day_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
 temperature_day_lbl.config(fg='#236A82')
 temperature_day_lbl.pack()  # side=LEFT, padx=40
+
 
 # night temperature label - labels related to night are represented with #123456 color
 temperature_night_lbl = Label(r, text='', bg='#77DCEB', font=('bold', 14))
