@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import io
 import tkinter.ttk
-from tkinter import Tk, Frame, Menu, PhotoImage, Label, Button, Entry, StringVar, messagebox
+from tkinter import Tk, Frame, Menu, Label, Button, StringVar, messagebox
 from PIL import ImageTk, Image
 import requests
 from datetime import datetime as dt, timedelta, date
@@ -147,11 +147,6 @@ r.title('Weather App')
 menubar = Menu(r)
 r.config(menu=menubar)
 
-
-def commands():
-    pass
-
-
 def file_func():
     hide_all_frames()
     file_new_frame.pack(fill="both", expand=1)
@@ -205,7 +200,7 @@ def get_weather(city):
         day_temp_holder.day_temp_value = round(data['main']['temp_max'] - 273.15) # This data always starts out as Kelvin, so -273.15 degrees to convert to Celsius
         night_temp_holder.night_temp_value = round(data['main']['temp_min'] - 273.15)
         description = data['weather'][0]['description']
-        icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"  # there should be image for night weather too!!!
+        icon_url = f"http://openweathermap.org/img/w/{data['weather'][0]['icon']}.png"
         today_temp.wind_speed = data['wind']['speed']
 
         if today_temp.temp_unit == "Fahrenheit":
@@ -375,8 +370,6 @@ logo_photo = ImageTk.PhotoImage(logo_image)
 # Creating a Label and set the logo image as its content /// bg='#6BD5F7'
 logo_label = Label(r, image=logo_photo, bg='#77DCEB')
 logo_label.pack()
-
-# Cities taken above to be used in init
 
 # creating drop box
 selected_city = StringVar()
