@@ -266,6 +266,10 @@ def get_weather(city):
         icon_lbl.config(image=icon_photo)
         icon_lbl.image = icon_photo
 
+        for t in futuredays: # Replace these with correct frame functions
+            t.print()
+        today_temp.print()
+
     except KeyError:
         messagebox.showerror("Error", "City not found")
 
@@ -297,9 +301,11 @@ def search():
     icon = ImageTk.PhotoImage(img)
     icon_lbl.configure(image=icon)
 
+
+
 def on_close():
     """Any exit operations go here. The exits caught by this function are soft exits, e.g. pressing X or Menu ->Exit
-    This part does not work on hard exits such as Alt+F4, the stop button (if on an IDE) or a hammer to the computer."""
+    This part does not work on hard exits such as Alt+F4, the 'Exit' button on the top bar of the program or a hammer to the computer."""
 
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
         print("-----SHUTTING DOWN-----")
@@ -311,23 +317,21 @@ def on_close():
         print("-----SAVING PREFERENCES DONE-----")
         r.destroy()
 
+def saveprefs():
+    if location_lbl.cget("text") != "":
+        print("Current city: " + location_lbl.cget("text").split()[0])
+    print("Temp unit: " + today_temp.temp_unit)
+    save(today_temp.temp_unit, location_lbl.cget("text"))
+    print("-----SAVING PREFERENCES DONE-----")
+
 # elements for file in menu
 file = Menu(menubar)
 menubar.add_cascade(label="File", menu=file)
-file.add_command(label='Save', command=file_func)
-file.add_command(label='Close')
+file.add_command(label='Save', command=saveprefs)
 file.add_separator()
 file.add_command(label='Exit', command=r.destroy)
 
-
-# options in menu
-option = Menu(menubar)
-menubar.add_cascade(label="Options", menu=option)
-option.add_command(label='Find', command=commands)
-option.add_command(label='Find Next', command=commands)
-
 file_new_frame = Frame(r, width=414, height=636, bg='#E9967A')
-
 
 # Adding logo
 logo_image = Image.open('wthrlogo1.png')
